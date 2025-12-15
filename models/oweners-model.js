@@ -19,7 +19,7 @@ const ownerSchema = new mongoose.Schema({
     },
     picture: {
         type: String,
-        required: true,
+        // required: true,
     },
     products: {
         type: Array,
@@ -27,10 +27,10 @@ const ownerSchema = new mongoose.Schema({
     },
     gstin: {
         type: String,
-        required: true,
+        // required: true,
     },
 });
 
-const Owner = mongoose.model('Owner', ownerSchema);
+const owner = mongoose.model('owner', ownerSchema);
 
-module.exports = Owner;  
+module.exports = owner;  

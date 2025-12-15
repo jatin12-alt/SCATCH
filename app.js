@@ -20,6 +20,8 @@ app.use('/owner', ownerRoutes);
 app.use('/user', userRoutes);
 app.use('/product', productRoutes);
 
+
 app.listen(3000, () => {
-    console.log(`Server is running on port 3000 http://localhost:3000`);
-});2
+    
+    // console.log(`http://localhost:3000`);
+});
