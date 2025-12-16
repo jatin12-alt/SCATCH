@@ -1,46 +1,57 @@
 const mongoose = require('mongoose');
 
-mongoose.connect("mongodb://127.0.0.1:27017/scatch");
+// Connection is handled centrally in config/mongoose-connection.js
 
-const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema(
+  {
     fullName: {
-        type: String,
-        minlength: 3,
-        maxlength: 30,
-        required: true,
+      type: String,
+      minlength: 3,
+      maxlength: 30,
+      required: true
     },
     email: {
-        type: String,
-        required: true,
-        unique: true,
-        match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     },
     password: {
-        type: String,
-        required: true,
-        minlength: 8,
+      type: String,
+      required: true,
+      minlength: 8
+    },
+    isVerified: {
+      type: Boolean,
+      default: false
+    },
+    verifyToken: {
+      token: String,
+      expires: Date
+    },
+    resetPasswordToken: {
+      token: String,
+      expires: Date
     },
     cart: {
-        type: Array,
-        default: [],
-    },
-    isAdmin: {
-        type: Boolean,
-        default: false,
+      type: Array,
+      default: []
     },
     orders: {
-        type: Array,
-        default: [],
+      type: Array,
+      default: []
     },
     contact: {
-        type: Number,
-        required: true,
+      type: Number
     },
     picture: {
-        type: String,
-        
-    },
-});
+      type: String
+    }
+  },
+  { timestamps: true }
+);
 
 const User = mongoose.model('User', userSchema);
 
