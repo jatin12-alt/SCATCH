@@ -8,8 +8,12 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('scatch_token');
+  const ownerToken = localStorage.getItem('scatch_owner_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  if (ownerToken) {
+    config.headers['x-owner-token'] = ownerToken;
   }
   return config;
 });
@@ -18,8 +22,14 @@ api.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
-      toast.error('Session expired. Please log in again.');
-      localStorage.removeItem('scatch_token');
+      const isOwnerRequest = error.config?.url?.includes('/owner');
+      if (isOwnerRequest) {
+        toast.error('Owner session expired. Please log in again.');
+        localStorage.removeItem('scatch_owner_token');
+      } else {
+        toast.error('Session expired. Please log in again.');
+        localStorage.removeItem('scatch_token');
+      }
     } else if (error.response?.data?.message) {
       toast.error(error.response.data.message);
     }

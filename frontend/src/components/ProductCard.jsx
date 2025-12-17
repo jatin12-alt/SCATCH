@@ -1,6 +1,3 @@
-import { Link } from 'react-router-dom';
-import { ShoppingCart } from 'lucide-react';
-import clsx from 'clsx';
 import { useDispatch } from 'react-redux';
 import { addItem } from '../store/slices/cartSlice';
 import toast from 'react-hot-toast';
@@ -13,54 +10,33 @@ const ProductCard = ({ product }) => {
     toast.success('Added to cart');
   };
 
+  const image = product?.image || product?.images?.[0];
+
   return (
-    <div className="group relative rounded-xl bg-surface border border-surface/60 shadow-card overflow-hidden">
-      <div className="aspect-[4/5] overflow-hidden bg-background">
-        <img
-          src={product?.images?.[0] || product.image}
-          alt={product.name}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-        />
+    <div className="group relative flex flex-col w-full border-2 border-transparent bg-surface/40 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(34,211,238,0.8)] transition-all duration-300 ease-in-out cursor-pointer">
+      <div
+        className="aspect-square flex items-center justify-center"
+        style={{ backgroundColor: product?.bgcolor || '#eab308' }}
+      >
+        {image ? (
+          <img src={image} alt={product?.name || 'Product'} className="w-4/5 h-4/5 object-contain" />
+        ) : (
+          <div className="text-sm text-slate-900">No image</div>
+        )}
       </div>
-      <div className="p-4 space-y-2">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs text-slate-400 uppercase tracking-wide">{product.category}</p>
-            <h3 className="text-lg font-semibold leading-tight">{product.name}</h3>
-          </div>
-          <span className="rounded-full px-3 py-1 text-xs bg-background text-slate-300">
-            {product.material || '—'}
-          </span>
+
+      <div className="bg-red-500 p-4 flex justify-between items-center text-slate-900">
+        <div>
+          <h3 className="font-bold text-lg leading-tight">{product?.name || 'Unnamed product'}</h3>
+          <p className="font-medium">₹ {product?.price != null ? product.price : '—'}</p>
         </div>
-        <p className="text-sm text-slate-400 line-clamp-2">{product.description}</p>
-        <div className="flex items-center justify-between pt-2">
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl font-semibold text-accent">${product.price?.toFixed(2)}</span>
-            {product.discount ? (
-              <span className="text-xs text-slate-500 line-through">
-                ${(product.price + product.discount).toFixed(2)}
-              </span>
-            ) : null}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleAdd}
-              className={clsx(
-                'inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition',
-                'bg-accent text-background shadow-glow hover:brightness-110'
-              )}
-            >
-              <ShoppingCart className="h-4 w-4" />
-              Add
-            </button>
-            <Link
-              to={`/product/${product._id}`}
-              className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium border border-surface hover:border-accent transition"
-            >
-              View
-            </Link>
-          </div>
-        </div>
+        <button
+          onClick={handleAdd}
+          className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform"
+          aria-label="Add to cart"
+        >
+          <span className="text-2xl font-bold text-black">+</span>
+        </button>
       </div>
     </div>
   );

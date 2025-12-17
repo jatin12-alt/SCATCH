@@ -122,7 +122,7 @@ const ShopPage = () => {
       {isLoading ? (
         <SkeletonGrid />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {filtered.length === 0 ? (
             <div className="col-span-full text-center text-slate-400 border border-surface rounded-xl p-6 bg-surface/50">
               No products found. Adjust filters or check API response format.

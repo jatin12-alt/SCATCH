@@ -1,25 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../api/client';
-import { loginSuccess } from '../store/slices/authSlice';
 
-const LoginPage = () => {
+const AdminLoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { user, token } = useSelector((state) => state.auth);
-  const isLoggedIn = user && token;
-
-  // Redirect to dashboard if already logged in
-  useEffect(() => {
-    if (isLoggedIn) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [isLoggedIn, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,14 +17,10 @@ const LoginPage = () => {
     }
     setLoading(true);
     try {
-      const { data } = await api.post('/api/users/login', { email, password });
-      if (data?.user) {
-        dispatch(loginSuccess({
-          user: data.user,
-          token: data.token || 'logged_in' // Backend sets cookie, but we need token for Redux
-        }));
-        toast.success('Logged in successfully');
-        navigate('/dashboard');
+      const { data } = await api.post('/admin/login', { email, password });
+      if (data?.owner) {
+        toast.success('Admin logged in successfully');
+        navigate('/owner/dashboard');
       } else {
         toast.error('Invalid response from server');
       }
@@ -51,9 +35,9 @@ const LoginPage = () => {
     <div className="min-h-[60vh] flex items-center justify-center px-4">
       <div className="w-full max-w-md rounded-xl border border-surface bg-surface/70 p-6 shadow-card space-y-4">
         <div className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-slate-400">Welcome back</p>
-          <h1 className="text-2xl font-semibold">Sign in to your account</h1>
-          <p className="text-sm text-slate-400">Enter your credentials to access your account.</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400">Admin</p>
+          <h1 className="text-2xl font-semibold">Admin Login</h1>
+          <p className="text-sm text-slate-400">Access the shop management dashboard.</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -63,7 +47,7 @@ const LoginPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input-dark mt-2 w-full"
-              placeholder="your@email.com"
+              placeholder="admin@example.com"
               required
             />
           </div>
@@ -86,17 +70,9 @@ const LoginPage = () => {
             {loading ? 'Signing in...' : 'Continue'}
           </button>
         </form>
-        <div className="text-center">
-          <p className="text-sm text-slate-400">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-accent hover:underline">
-              Sign up
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   );
 };
 
-export default LoginPage;
+export default AdminLoginPage;

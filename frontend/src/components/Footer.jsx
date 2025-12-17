@@ -12,6 +12,9 @@ const Footer = () => (
         <a className="hover:text-accent" href="#support">
           Support
         </a>
+        <a className="hover:text-accent" href="/admin/login">
+          Admin
+        </a>
       </div>
     </div>
   </footer>

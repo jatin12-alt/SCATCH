@@ -1,38 +1,69 @@
 const mongoose = require('mongoose');
 
-
-const productSchema = new mongoose.Schema({
-    image: {
-        type: String,
-        required: true,
-    },
+const productSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true,
-        minlength: 3,
-        maxlength: 30,
+      type: String,
+      required: true,
+      minlength: 3,
+      maxlength: 80
+    },
+    description: {
+      type: String,
+      default: ''
+    },
+    category: {
+      type: String,
+      default: 'General'
+    },
+    material: {
+      type: String,
+      default: 'Unknown'
+    },
+    color: {
+      type: String,
+      default: 'Multi'
     },
     price: {
-        type: Number,
-        required: true,
+      type: Number,
+      required: true,
+      min: 0
     },
     discount: {
-        type: Number,
-        required: true,
+      type: Number,
+      default: 0,
+      min: 0
     },
-    bgcolor: {
-        type: String,
-        required: true,
+    countInStock: {
+      type: Number,
+      default: 0,
+      min: 0
     },
-    panelcolor: {
-        type: String,
-        required: true,
+    rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5
     },
-    textcolor: {
-        type: String,
-        required: true,
+    image: {
+      type: String,
+      default: ''
     },
-});
+    images: {
+      type: [String],
+      default: []
+    },
+    dimensions: {
+      w: { type: Number, min: 0 },
+      h: { type: Number, min: 0 },
+      d: { type: Number, min: 0 }
+    },
+    bgcolor: { type: String },
+    panelcolor: { type: String },
+    textcolor: { type: String }
+  },
+  { timestamps: true }
+);
 
 const Product = mongoose.model('Product', productSchema);
 

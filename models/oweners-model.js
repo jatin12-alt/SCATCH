@@ -11,7 +11,9 @@ const ownerSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-        match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        lowercase: true,
+        trim: true,
+        match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     },
     password: {
         type: String,
@@ -19,7 +21,6 @@ const ownerSchema = new mongoose.Schema({
     },
     picture: {
         type: String,
-        // required: true,
     },
     products: {
         type: Array,
@@ -27,10 +28,9 @@ const ownerSchema = new mongoose.Schema({
     },
     gstin: {
         type: String,
-        // required: true,
     },
-});
+}, { timestamps: true });
 
-const owner = mongoose.model('owner', ownerSchema);
+const Owner = mongoose.model('Owner', ownerSchema);
 
-module.exports = owner;  
+module.exports = Owner;  

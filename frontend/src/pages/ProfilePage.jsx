@@ -1,5 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { User, ShoppingBag } from 'lucide-react';
 import { setProfile } from '../store/slices/authSlice';
 import toast from 'react-hot-toast';
 
@@ -17,6 +19,24 @@ const ProfilePage = () => {
     dispatch(setProfile(form));
     toast.success('Profile updated (local state)');
   };
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <p className="text-xs uppercase tracking-wide text-slate-400">Heads up</p>
+          <h1 className="text-3xl font-semibold">Login first, bro, then the profile vibes.</h1>
+          <p className="text-sm text-slate-400">No login, no profile. Them the rules.</p>
+          <Link
+            to="/login"
+            className="inline-block rounded-full bg-accent text-background px-6 py-3 font-semibold shadow-glow hover:brightness-110 transition"
+          >
+            Take me to login
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -63,8 +83,33 @@ const ProfilePage = () => {
         </div>
 
         <div className="rounded-xl border border-surface bg-surface/60 p-5 space-y-3">
-          <h3 className="text-lg font-semibold">Orders</h3>
-          <p className="text-sm text-slate-400">Past orders will appear here once connected to the API.</p>
+          <h3 className="text-lg font-semibold">Quick Actions</h3>
+          <div className="space-y-3">
+            <Link
+              to="/dashboard"
+              className="block w-full text-left rounded-lg border border-surface p-3 hover:border-accent transition"
+            >
+              <div className="flex items-center gap-3">
+                <User className="h-5 w-5 text-slate-400" />
+                <div>
+                  <p className="font-medium">View Dashboard</p>
+                  <p className="text-sm text-slate-400">Check orders and account overview</p>
+                </div>
+              </div>
+            </Link>
+            <Link
+              to="/cart"
+              className="block w-full text-left rounded-lg border border-surface p-3 hover:border-accent transition"
+            >
+              <div className="flex items-center gap-3">
+                <ShoppingBag className="h-5 w-5 text-slate-400" />
+                <div>
+                  <p className="font-medium">View Cart</p>
+                  <p className="text-sm text-slate-400">Check your shopping cart</p>
+                </div>
+              </div>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

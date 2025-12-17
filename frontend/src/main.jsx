@@ -13,9 +13,13 @@ import ProductPage from './pages/ProductPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import ProfilePage from './pages/ProfilePage';
-import LoginPage from './pages/LoginPage';
+import SettingsPage from './pages/SettingsPage';
+import UserDashboardPage from './pages/UserDashboardPage';
+import OwnerDashboardPage from './pages/OwnerDashboardPage';
+import OwnerCreateProductPage from './pages/OwnerCreateProductPage';
 import RegisterPage from './pages/RegisterPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import AdminLoginPage from './pages/AdminLoginPage';
+import LoginPage from './pages/LoginPage';
 
 const queryClient = new QueryClient();
 
@@ -26,15 +30,20 @@ const RootApp = () => (
         <BrowserRouter>
           <Layout>
             <Routes>
-              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/" element={<Navigate to="/shop" replace />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/shop" element={<ShopPage />} />
               <Route path="/product/:id" element={<ProductPage />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/dashboard" element={<UserDashboardPage />} />
+              <Route path="/admin/login" element={<AdminLoginPage />} />
+              <Route path="/owner/dashboard" element={<OwnerDashboardPage />} />
+              <Route path="/owner/create" element={<OwnerCreateProductPage />} />
+              <Route path="/owner/edit/:id" element={<OwnerCreateProductPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
             </Routes>
           </Layout>
         </BrowserRouter>

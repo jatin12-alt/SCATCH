@@ -2,17 +2,17 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 const User = require('../models/user-model');
-const { hashPassword, comparePassword, generateToken, isStrongPassword } = require('../utils/auth');
-const sendEmail = require('../utils/sendEmail');
+const Order = require('../models/order-model');
+const Product = require('../models/product-model');
+const { hashPassword, comparePassword, isStrongPassword } = require('../utils/auth');
 const rateLimit = require('../middleware/rateLimit');
+const { requireUserAuth } = require('../middleware/userAuth');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_jwt_secret_change_me';
-const JWT_EXPIRES_IN = '15m';
-const JWT_REFRESH_EXPIRES_IN = '30d';
 
-// Helper to create JWT
-function createAccessToken(user) {
-  return jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+// Helper to create JWT for users
+function createUserToken(user) {
+  return jwt.sign({ id: user._id, email: user.email, role: 'user' }, JWT_SECRET, { expiresIn: '7d' });
 }
 
 // Public route health check
@@ -20,8 +20,8 @@ router.get('/', (req, res) => {
   res.send('User Route');
 });
 
-// Registration with email verification
-router.post('/signup', async (req, res) => {
+// User registration - automatically authenticates user
+router.post('/register', rateLimit({ windowMs: 60 * 1000, max: 5 }), async (req, res) => {
   try {
     const { fullName, email, password } = req.body;
 
@@ -40,70 +40,39 @@ router.post('/signup', async (req, res) => {
       return res.status(409).json({ message: 'Email is already registered.' });
     }
 
-    const hashed = await hashPassword(password);
-    const verificationToken = generateToken(32);
+    const hashedPassword = await hashPassword(password);
 
     const user = await User.create({
       fullName,
       email: email.toLowerCase(),
-      password: hashed,
-      isVerified: false,
-      verifyToken: {
-        token: verificationToken,
-        expires: new Date(Date.now() + 60 * 60 * 1000) // 1 hour
-      }
+      password: hashedPassword
     });
 
-    const verifyUrl = `${req.protocol}://${req.get('host')}/user/verify-email?token=${verificationToken}`;
+    // Auto-login: create JWT token and set cookie
+    const token = createUserToken(user);
 
-    await sendEmail({
-      to: user.email,
-      subject: 'Verify your TaskFlow account',
-      html: `<p>Hi ${user.fullName},</p>
-             <p>Thanks for signing up for TaskFlow. Please verify your email by clicking the link below:</p>
-             <p><a href="${verifyUrl}">Verify my email</a></p>
-             <p>This link will expire in 1 hour.</p>`
+    res.cookie('user_token', token, {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
     return res.status(201).json({
-      message: 'User created successfully. Please check your email to verify your account.'
+      message: 'User registered and logged in successfully',
+      user: { id: user._id, fullName: user.fullName, email: user.email }
     });
   } catch (error) {
-    console.error('Signup error', error);
-    return res.status(500).json({ message: 'User not created', error: error.message });
+    console.error('Registration error', error);
+    return res.status(500).json({ message: 'User registration failed', error: error.message });
   }
 });
 
-// Email verification
-router.get('/verify-email', async (req, res) => {
-  try {
-    const { token } = req.query;
-    if (!token) return res.status(400).json({ message: 'Verification token is required.' });
-
-    const user = await User.findOne({
-      'verifyToken.token': token,
-      'verifyToken.expires': { $gt: new Date() }
-    });
-
-    if (!user) {
-      return res.status(400).json({ message: 'Verification token is invalid or has expired.' });
-    }
-
-    user.isVerified = true;
-    user.verifyToken = undefined;
-    await user.save();
-
-    return res.json({ message: 'Email verified successfully. You can now log in.' });
-  } catch (error) {
-    console.error('Verify email error', error);
-    return res.status(500).json({ message: 'Could not verify email', error: error.message });
-  }
-});
-
-// Login with rate limiting
+// User login
 router.post('/login', rateLimit({ windowMs: 60 * 1000, max: 5 }), async (req, res) => {
   try {
     const { email, password } = req.body;
+
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required.' });
     }
@@ -113,22 +82,19 @@ router.post('/login', rateLimit({ windowMs: 60 * 1000, max: 5 }), async (req, re
       return res.status(400).json({ message: 'Invalid credentials.' });
     }
 
-    if (!user.isVerified) {
-      return res.status(403).json({ message: 'Please verify your email before logging in.' });
-    }
-
     const isMatch = await comparePassword(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials.' });
     }
 
-    const accessToken = createAccessToken(user);
+    // Create JWT token and set cookie
+    const token = createUserToken(user);
 
-    res.cookie('taskflow_token', accessToken, {
+    res.cookie('user_token', token, {
       httpOnly: true,
       sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 15 * 60 * 1000
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
     return res.json({
@@ -137,13 +103,13 @@ router.post('/login', rateLimit({ windowMs: 60 * 1000, max: 5 }), async (req, re
     });
   } catch (error) {
     console.error('Login error', error);
-    return res.status(500).json({ message: 'User not logged in', error: error.message });
+    return res.status(500).json({ message: 'User login failed', error: error.message });
   }
 });
 
 // Logout - clear cookie
 router.post('/logout', (req, res) => {
-  res.clearCookie('taskflow_token', {
+  res.clearCookie('user_token', {
     httpOnly: true,
     sameSite: 'strict',
     secure: process.env.NODE_ENV === 'production'
@@ -151,77 +117,182 @@ router.post('/logout', (req, res) => {
   return res.json({ message: 'User logged out successfully' });
 });
 
-// Forgot password
-router.post('/forgot-password', rateLimit({ windowMs: 60 * 1000, max: 5 }), async (req, res) => {
+// Protected user dashboard routes
+// Get user profile and dashboard data
+router.get('/dashboard', requireUserAuth, async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: 'Email is required.' });
-    }
-
-    const user = await User.findOne({ email: email.toLowerCase() });
-
-    // Always respond the same to avoid leaking account existence
+    const user = await User.findById(req.user.id).select('-password');
     if (!user) {
-      return res.json({ message: 'If an account exists for this email, a reset link has been sent.' });
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    const resetToken = generateToken(32);
-    user.resetPasswordToken = {
-      token: resetToken,
-      expires: new Date(Date.now() + 60 * 60 * 1000)
+    // Get user's orders
+    const orders = await Order.find({ user: req.user.id })
+      .sort({ createdAt: -1 })
+      .select('-user')
+      .populate('items.product', 'name image');
+
+    // Return user data with orders
+    const dashboardData = {
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        contact: user.contact,
+        picture: user.picture,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt
+      },
+      orders: orders,
+      cart: user.cart || []
     };
-    await user.save();
 
-    const resetUrl = `${req.protocol}://${req.get('host')}/user/reset-password?token=${resetToken}`;
-
-    await sendEmail({
-      to: user.email,
-      subject: 'Reset your TaskFlow password',
-      html: `<p>Hi ${user.fullName},</p>
-             <p>You requested to reset your TaskFlow password. Click the link below to set a new password:</p>
-             <p><a href="${resetUrl}">Reset my password</a></p>
-             <p>If you did not request this, you can ignore this email.</p>`
-    });
-
-    return res.json({ message: 'If an account exists for this email, a reset link has been sent.' });
+    res.json(dashboardData);
   } catch (error) {
-    console.error('Forgot password error', error);
-    return res.status(500).json({ message: 'Could not start password reset', error: error.message });
+    console.error('Dashboard error', error);
+    return res.status(500).json({ message: 'Failed to fetch dashboard data', error: error.message });
   }
 });
 
-// Reset password
-router.post('/reset-password', async (req, res) => {
+// Update user profile
+router.put('/profile', requireUserAuth, async (req, res) => {
   try {
-    const { token, password } = req.body;
-    if (!token || !password) {
-      return res.status(400).json({ message: 'Token and new password are required.' });
+    const { fullName, contact, picture } = req.body;
+
+    // Validate input
+    if (fullName && (fullName.length < 3 || fullName.length > 30)) {
+      return res.status(400).json({ message: 'Full name must be between 3 and 30 characters' });
     }
 
-    if (!isStrongPassword(password)) {
-      return res.status(400).json({
-        message: 'Password must be at least 8 characters long and include at least one capital letter and one number.'
-      });
-    }
+    const updateData = {};
+    if (fullName) updateData.fullName = fullName;
+    if (contact !== undefined) updateData.contact = contact;
+    if (picture !== undefined) updateData.picture = picture;
 
-    const user = await User.findOne({
-      'resetPasswordToken.token': token,
-      'resetPasswordToken.expires': { $gt: new Date() }
-    });
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      updateData,
+      { new: true, runValidators: true }
+    ).select('-password');
 
     if (!user) {
-      return res.status(400).json({ message: 'Reset token is invalid or has expired.' });
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    user.password = await hashPassword(password);
-    user.resetPasswordToken = undefined;
+    res.json({
+      message: 'Profile updated successfully',
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        contact: user.contact,
+        picture: user.picture
+      }
+    });
+  } catch (error) {
+    console.error('Profile update error', error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: 'Invalid data provided', error: error.message });
+    }
+    return res.status(500).json({ message: 'Failed to update profile', error: error.message });
+  }
+});
+
+// Get user orders
+router.get('/orders', requireUserAuth, async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.user.id })
+      .sort({ createdAt: -1 })
+      .populate('items.product', 'name image');
+
+    res.json({ orders });
+  } catch (error) {
+    console.error('Orders fetch error', error);
+    return res.status(500).json({ message: 'Failed to fetch orders', error: error.message });
+  }
+});
+
+// Create order from cart
+router.post('/orders', requireUserAuth, async (req, res) => {
+  try {
+    const { shippingAddress, paymentMethod } = req.body;
+
+    if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.email ||
+        !shippingAddress.phone || !shippingAddress.city || !shippingAddress.address) {
+      return res.status(400).json({ message: 'Complete shipping address is required' });
+    }
+
+    // Get user's cart
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.cart || user.cart.length === 0) {
+      return res.status(400).json({ message: 'Cart is empty' });
+    }
+
+    // Validate and prepare order items
+    const orderItems = [];
+    let subtotal = 0;
+
+    for (const cartItem of user.cart) {
+      const product = await Product.findById(cartItem._id);
+      if (!product) {
+        return res.status(400).json({ message: `Product ${cartItem._id} not found` });
+      }
+
+      if (product.countInStock < cartItem.quantity) {
+        return res.status(400).json({
+          message: `Insufficient stock for ${product.name}. Available: ${product.countInStock}`
+        });
+      }
+
+      orderItems.push({
+        product: product._id,
+        name: product.name,
+        image: product.images?.[0] || product.image,
+        price: product.price,
+        quantity: cartItem.quantity
+      });
+
+      subtotal += product.price * cartItem.quantity;
+
+      // Decrease stock
+      product.countInStock -= cartItem.quantity;
+      await product.save();
+    }
+
+    // Calculate shipping cost (simple logic - free over $100, otherwise $10)
+    const shippingCost = subtotal > 100 ? 0 : 10;
+    const totalAmount = subtotal + shippingCost;
+
+    // Create order
+    const order = await Order.create({
+      user: req.user.id,
+      items: orderItems,
+      shippingAddress,
+      paymentMethod: paymentMethod || 'card',
+      subtotal,
+      shippingCost,
+      totalAmount
+    });
+
+    // Clear user's cart
+    user.cart = [];
     await user.save();
 
-    return res.json({ message: 'Password reset successfully. You can now log in with your new password.' });
+    // Return created order
+    const populatedOrder = await Order.findById(order._id)
+      .populate('items.product', 'name image');
+
+    res.status(201).json({
+      message: 'Order created successfully',
+      order: populatedOrder
+    });
   } catch (error) {
-    console.error('Reset password error', error);
-    return res.status(500).json({ message: 'Could not reset password', error: error.message });
+    console.error('Order creation error', error);
+    return res.status(500).json({ message: 'Failed to create order', error: error.message });
   }
 });
 
