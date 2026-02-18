@@ -5,6 +5,7 @@ import { fetchProducts } from '../store/productsSlice';
 import { addToCart } from '../store/cartSlice';
 import { Leaf, Heart, Share2, ChevronRight } from 'lucide-react';
 import Toast from '../components/Toast';
+import LoginPromptModal from '../components/LoginPromptModal';
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +16,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     if (items.length === 0) {
@@ -29,7 +31,7 @@ export default function ProductDetail() {
 
   const handleAddToCart = async () => {
     if (!user) {
-      navigate('/login');
+      setShowLoginModal(true);
       return;
     }
 
@@ -215,6 +217,11 @@ export default function ProductDetail() {
       </div>
 
       {showToast && <Toast message={toastMessage} type="success" onClose={() => setShowToast(false)} />}
+      <LoginPromptModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="Please login to add products to your cart"
+      />
     </div>
   );
 }

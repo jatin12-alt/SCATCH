@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { addToCart } from '../../store/cartSlice';
 import Toast from '../Toast';
+import LoginPromptModal from '../LoginPromptModal';
 import { useNavigate } from 'react-router-dom';
 
 interface Product {
@@ -26,12 +27,13 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { user } = useAppSelector((state) => state.auth);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
     if (!user) {
-      navigate('/login');
+      setShowLoginModal(true);
       return;
     }
 
@@ -46,10 +48,18 @@ export default function ProductCard({ product }: ProductCardProps) {
     setShowToast(true);
   };
 
+  const handleProductClick = () => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    navigate(`/product/${product.id}`);
+  };
+
   return (
     <>
       <button
-        onClick={() => navigate(`/product/${product.id}`)}
+        onClick={handleProductClick}
         className="group bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-left w-full"
       >
         <div className="relative overflow-hidden h-64">
@@ -103,6 +113,11 @@ export default function ProductCard({ product }: ProductCardProps) {
       </button>
 
       {showToast && <Toast message={toastMessage} type="success" onClose={() => setShowToast(false)} />}
+      <LoginPromptModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="Please login first to view product details and add items to cart"
+      />
     </>
   );
 }
