@@ -2,133 +2,142 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { signUp, clearError } from '../../store/authSlice';
+import { signUp, resetAuthError } from '../../store/authSlice';
 
 export default function Register() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { loading, error } = useAppSelector((state) => state.auth);
-  const [validationError, setValidationError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Use the humanized names from our auth slice
+  const { isAuthenticating, authError } = useAppSelector((state) => state.auth);
+  const [formValidationError, setFormValidationError] = useState('');
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(clearError());
-    setValidationError('');
 
+    // Clear old errors
+    dispatch(resetAuthError());
+    setFormValidationError('');
+
+    // Basic client-side validation logic
     if (password !== confirmPassword) {
-      setValidationError('Passwords do not match');
+      setFormValidationError('Wait, passwords do not match!');
       return;
     }
 
     if (password.length < 6) {
-      setValidationError('Password must be at least 6 characters');
+      setFormValidationError('Password should be at least 6 characters long.');
       return;
     }
 
-    const result = await dispatch(signUp({ email, password, fullName }));
-    if (signUp.fulfilled.match(result)) {
-      navigate('/');
+    try {
+      const result = await dispatch(signUp({ email, password, fullName }));
+      if (signUp.fulfilled.match(result)) {
+        // success - head home
+        navigate('/');
+      }
+    } catch (err) {
+      console.error('Registration error:', err);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-serif font-bold text-stone-800">Join SCATCH</h1>
-          <p className="text-stone-600 mt-2">Create your account for premium vegan bags</p>
+    <div className="min-h-screen bg-stone-100 flex items-center justify-center px-4 py-12">
+      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-serif font-bold text-stone-900 tracking-tight">Join SCATCH</h1>
+          <p className="text-stone-500 mt-2">Create your account to start shopping premium vegan wear.</p>
         </div>
 
-        {(error || validationError) && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-            {error || validationError}
+        {(authError || formValidationError) && (
+          <div className="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 text-sm font-medium">
+            {authError || formValidationError}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleRegisterSubmit} className="space-y-5">
           <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-stone-700 mb-1">
+            <label className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-2">
               Full Name
             </label>
             <input
-              id="fullName"
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded focus:border-stone-500 outline-none transition-all"
               placeholder="John Doe"
             />
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-stone-700 mb-1">
+            <label className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-2">
               Email Address
             </label>
             <input
-              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-transparent transition-all"
-              placeholder="you@example.com"
+              className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded focus:border-stone-500 outline-none transition-all"
+              placeholder="name@email.com"
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-stone-700 mb-1">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-transparent transition-all"
-              placeholder="••••••••"
-            />
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded focus:border-stone-500 outline-none transition-all"
+                placeholder="••••••••"
+              />
+            </div>
 
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-stone-700 mb-1">
-              Confirm Password
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-transparent transition-all"
-              placeholder="••••••••"
-            />
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-2">
+                Confirm
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded focus:border-stone-500 outline-none transition-all"
+                placeholder="••••••••"
+              />
+            </div>
           </div>
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-stone-800 text-white py-3 rounded-lg font-medium hover:bg-stone-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            disabled={isAuthenticating}
+            className="w-full bg-stone-900 text-white py-3 rounded font-serif font-bold text-lg hover:bg-black transition-all disabled:opacity-50 flex items-center justify-center gap-3 mt-4"
           >
-            {loading ? (
-              <span>Creating Account...</span>
+            {isAuthenticating ? (
+              'Creating your account...'
             ) : (
               <>
                 <UserPlus className="w-5 h-5" />
-                <span>Create Account</span>
+                Register
               </>
             )}
           </button>
         </form>
 
-        <div className="text-center text-sm text-stone-600">
-          Already have an account?{' '}
-          <Link to="/login" className="text-stone-800 font-medium hover:underline">
+        <div className="mt-8 pt-8 border-t border-stone-100 text-center text-sm text-stone-500">
+          Already a member?{' '}
+          <Link to="/login" className="text-stone-900 font-bold hover:underline">
             Sign In
           </Link>
         </div>

@@ -1,23 +1,26 @@
-## SCATCH-4U (local run)
+# SCATCH-4U Project
 
-This repo is a **Vite + React** app that uses **Supabase** as the backend.
+This is my local build of the SCATCH vegan e-commerce app. It's built on React/Vite with Supabase handling the backend heavy lifting (auth, products, etc.).
 
-### Start the app (Windows cmd)
+## How to get it running:
 
-```bat
-cd /d "C:\Users\jatin\OneDrive\Desktop\backend all projects\SCATCH-4U\SCATCH-4U-main\SCATCH-4U-main"
-npm install
-```
+1.  **Clone and Prep:**
+    Make sure you're in the right directory:
+    ```bat
+    cd /d "C:\Users\jatin\OneDrive\Desktop\All_Projects\SCATCH-4U"
+    npm install
+    ```
 
-Create a file named `.env` in this same folder with:
+2.  **Environment Setup:**
+    You'll need a `.env` file in the root. Don't forget to add your Supabase keys:
+    - `VITE_SUPABASE_URL`=...
+    - `VITE_SUPABASE_ANON_KEY`=...
 
-- `VITE_SUPABASE_URL` (from Supabase Project Settings → API)
-- `VITE_SUPABASE_ANON_KEY` (from Supabase Project Settings → API)
+3.  **Launch:**
+    ```bat
+    npm run dev
+    ```
+    Should pop up on `http://localhost:5173`.
 
-Then run:
-
-```bat
-npm run dev
-```
-
-Vite will print the local URL (typically `http://localhost:5173/`).
+---
+*Note: If you run into auth issues, double check the RLS policies in Supabase.*

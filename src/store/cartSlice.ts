@@ -20,18 +20,21 @@ interface CartItem {
 }
 
 interface CartState {
-  items: CartItem[];
-  loading: boolean;
-  error: string | null;
+  cartProducts: CartItem[];
+  isCartSyncing: boolean;
+  cartError: string | null;
 }
 
 const initialState: CartState = {
-  items: [],
-  loading: false,
-  error: null,
+  cartProducts: [],
+  isCartSyncing: false,
+  cartError: null,
 };
 
-export const fetchCart = createAsyncThunk('cart/fetchCart', async (userId: string) => {
+/**
+ * Sync the local state with the user's remote shopping bag
+ */
+export const fetchCart = createAsyncThunk('cart/syncWithRemote', async (userId: string) => {
   const { data, error } = await supabase
     .from('cart_items')
     .select(`
@@ -46,9 +49,13 @@ export const fetchCart = createAsyncThunk('cart/fetchCart', async (userId: strin
   return data as unknown as CartItem[];
 });
 
+/**
+ * Add a new discovery to the shopping bag or increment existing quantity
+ */
 export const addToCart = createAsyncThunk(
-  'cart/addToCart',
+  'cart/addItem',
   async ({ userId, productId, quantity = 1 }: { userId: string; productId: string; quantity?: number }) => {
+    // First, check if this item is already in their curated list
     const { data: existing } = await supabase
       .from('cart_items')
       .select('id, quantity')
@@ -89,8 +96,11 @@ export const addToCart = createAsyncThunk(
   }
 );
 
+/**
+ * Adjust the quantity of a specific item in the bag
+ */
 export const updateCartQuantity = createAsyncThunk(
-  'cart/updateQuantity',
+  'cart/updateQty',
   async ({ cartItemId, quantity }: { cartItemId: string; quantity: number }) => {
     const { data, error } = await supabase
       .from('cart_items')
@@ -109,14 +119,20 @@ export const updateCartQuantity = createAsyncThunk(
   }
 );
 
-export const removeFromCart = createAsyncThunk('cart/removeFromCart', async (cartItemId: string) => {
+/**
+ * Remove an item from the bag entirely
+ */
+export const removeFromCart = createAsyncThunk('cart/removeItem', async (cartItemId: string) => {
   const { error } = await supabase.from('cart_items').delete().eq('id', cartItemId);
 
   if (error) throw error;
   return cartItemId;
 });
 
-export const clearCart = createAsyncThunk('cart/clearCart', async (userId: string) => {
+/**
+ * Purge the entire shopping bag - usually after a successful checkout
+ */
+export const clearCart = createAsyncThunk('cart/purgeBag', async (userId: string) => {
   const { error } = await supabase.from('cart_items').delete().eq('user_id', userId);
 
   if (error) throw error;
@@ -125,41 +141,52 @@ export const clearCart = createAsyncThunk('cart/clearCart', async (userId: strin
 const cartSlice = createSlice({
   name: 'cart',
   initialState,
-  reducers: {},
+  reducers: {
+    // Local purge for manual logouts
+    resetCartLocally: (state) => {
+      state.cartProducts = [];
+      state.cartError = null;
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchCart.pending, (state) => {
-        state.loading = true;
+        state.isCartSyncing = true;
       })
-      .addCase(fetchCart.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload;
+      .addCase(fetchCart.fulfilled, (state, { payload }) => {
+        state.isCartSyncing = false;
+        state.cartProducts = payload;
       })
       .addCase(fetchCart.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to fetch cart';
+        state.isCartSyncing = false;
+        state.cartError = action.error.message || 'We couldn\'t retrieve your bag contents.';
       })
-      .addCase(addToCart.fulfilled, (state, action) => {
-        const existingIndex = state.items.findIndex((item) => item.id === action.payload.id);
+
+      .addCase(addToCart.fulfilled, (state, { payload }) => {
+        const existingIndex = state.cartProducts.findIndex((item) => item.id === payload.id);
         if (existingIndex !== -1) {
-          state.items[existingIndex] = action.payload;
+          state.cartProducts[existingIndex] = payload;
         } else {
-          state.items.push(action.payload);
+          state.cartProducts.push(payload);
         }
       })
-      .addCase(updateCartQuantity.fulfilled, (state, action) => {
-        const index = state.items.findIndex((item) => item.id === action.payload.id);
+
+      .addCase(updateCartQuantity.fulfilled, (state, { payload }) => {
+        const index = state.cartProducts.findIndex((item) => item.id === payload.id);
         if (index !== -1) {
-          state.items[index] = action.payload;
+          state.cartProducts[index] = payload;
         }
       })
-      .addCase(removeFromCart.fulfilled, (state, action) => {
-        state.items = state.items.filter((item) => item.id !== action.payload);
+
+      .addCase(removeFromCart.fulfilled, (state, { payload }) => {
+        state.cartProducts = state.cartProducts.filter((item) => item.id !== payload);
       })
+
       .addCase(clearCart.fulfilled, (state) => {
-        state.items = [];
+        state.cartProducts = [];
       });
   },
 });
 
+export const { resetCartLocally } = cartSlice.actions;
 export default cartSlice.reducer;

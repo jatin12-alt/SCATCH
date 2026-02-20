@@ -19,19 +19,19 @@ import Sell from './pages/Sell';
 
 function App() {
   const dispatch = useAppDispatch();
-  const { user, loading } = useAppSelector((state) => state.auth);
+  const { account, isAuthenticating } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(checkAuth());
   }, [dispatch]);
 
   useEffect(() => {
-    if (user) {
-      dispatch(fetchCart(user.id));
+    if (account) {
+      dispatch(fetchCart(account.id));
     }
-  }, [user, dispatch]);
+  }, [account, dispatch]);
 
-  if (loading) {
+  if (isAuthenticating) {
     return (
       <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-800"></div>
@@ -49,8 +49,8 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/sell" element={<Sell />} />
           <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-          <Route path="/register" element={user ? <Navigate to="/" replace /> : <Register />} />
+          <Route path="/login" element={account ? <Navigate to="/" replace /> : <Login />} />
+          <Route path="/register" element={account ? <Navigate to="/" replace /> : <Register />} />
           <Route
             path="/cart"
             element={

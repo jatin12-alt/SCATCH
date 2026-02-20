@@ -5,8 +5,10 @@ import { Link } from 'react-router-dom';
 import Toast from '../components/Toast';
 
 export default function Sell() {
-  const { user } = useAppSelector((state) => state.auth);
-  const [formData, setFormData] = useState({
+  // naming update: user -> account
+  const { account } = useAppSelector((state) => state.auth);
+
+  const [submissionForm, setSubmissionForm] = useState({
     brandName: '',
     productType: '',
     material: '',
@@ -15,18 +17,19 @@ export default function Sell() {
     email: '',
     phone: '',
   });
-  const [showToast, setShowToast] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [showConfirmationToast, setShowConfirmationToast] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleApplicationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setIsProcessing(true);
 
-    // Simulate form submission (you can integrate with backend/email service later)
+    // Mocking an API call for the form submission
     setTimeout(() => {
-      setIsSubmitting(false);
-      setShowToast(true);
-      setFormData({
+      setIsProcessing(false);
+      setShowConfirmationToast(true);
+      setSubmissionForm({
         brandName: '',
         productType: '',
         material: '',
@@ -35,251 +38,205 @@ export default function Sell() {
         email: '',
         phone: '',
       });
-    }, 1500);
+    }, 2000);
   };
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-green-700 to-green-800 text-white py-16 sm:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Package className="w-12 h-12 sm:w-16 sm:h-16" />
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold">Sell Your Product</h1>
+    <div className="min-h-screen bg-[#fafafa]">
+
+      {/* Dynamic Hero Section */}
+      <section className="bg-stone-900 text-white py-24 border-b border-stone-800">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center justify-center p-3 bg-green-500/10 rounded-2xl mb-8">
+            <Package className="w-12 h-12 text-green-500" />
           </div>
-          <p className="text-lg sm:text-xl text-green-50 max-w-3xl mx-auto">
-            Are you a creator of vegan, sustainable products? Join SCATCH and reach thousands of 
-            conscious consumers looking for ethical alternatives.
+          <h1 className="text-5xl md:text-7xl font-serif font-black mb-8 tracking-tighter">
+            Showcase Your <span className="text-green-500">Craft</span>
+          </h1>
+          <p className="text-xl text-stone-400 max-w-2xl mx-auto leading-relaxed font-medium">
+            Join the SCATCH ecosystem and put your ethical creations in front of
+            the world's most conscious shoppers.
           </p>
         </div>
-      </div>
+      </section>
 
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-        {/* Benefits Section */}
-        <div className="bg-white rounded-xl shadow-md p-6 sm:p-8 mb-6 sm:mb-8">
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-stone-800 mb-5 sm:mb-6">Why Sell with SCATCH?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex items-start gap-4">
-              <CheckCircle className="w-6 h-6 text-green-700 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold text-stone-800 mb-1">Reach Conscious Consumers</h3>
-                <p className="text-stone-600 text-sm">
-                  Connect with customers who value sustainability and ethical production.
-                </p>
-              </div>
+      {/* Structured Content Area */}
+      <div className="max-w-5xl mx-auto px-6 lg:px-8 py-20">
+
+        {/* Value Prop Cards */}
+        <div className="grid md:grid-cols-2 gap-8 mb-20">
+          <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-stone-100 transition-transform hover:-translate-y-1">
+            <h2 className="text-3xl font-serif font-bold text-stone-900 mb-8">Why Partner?</h2>
+            <div className="space-y-6">
+              {[
+                "Targeted ethical consumer reach",
+                "Seamless vendor onboarding",
+                "Strategic marketing placements",
+                "Transparent revenue sharing"
+              ].map((benefit, idx) => (
+                <div key={idx} className="flex gap-4 items-center">
+                  <div className="bg-green-50 p-1 rounded-full">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <span className="text-stone-600 font-medium">{benefit}</span>
+                </div>
+              ))}
             </div>
-            <div className="flex items-start gap-4">
-              <CheckCircle className="w-6 h-6 text-green-700 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold text-stone-800 mb-1">Easy Setup</h3>
-                <p className="text-stone-600 text-sm">
-                  Simple onboarding process to get your products listed quickly.
-                </p>
-              </div>
+          </div>
+
+          <div className="bg-stone-950 p-10 rounded-[2.5rem] text-white shadow-xl shadow-stone-200">
+            <div className="flex items-center gap-3 mb-8">
+              <AlertCircle className="w-6 h-6 text-green-400" />
+              <h3 className="text-xl font-bold uppercase tracking-widest text-stone-400">Our Standards</h3>
             </div>
-            <div className="flex items-start gap-4">
-              <CheckCircle className="w-6 h-6 text-green-700 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold text-stone-800 mb-1">Marketing Support</h3>
-                <p className="text-stone-600 text-sm">
-                  We promote your products through our marketing channels and social media.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <CheckCircle className="w-6 h-6 text-green-700 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold text-stone-800 mb-1">Fair Commission</h3>
-                <p className="text-stone-600 text-sm">
-                  Competitive rates that help your business grow while maintaining profitability.
-                </p>
-              </div>
-            </div>
+            <ul className="space-y-4 text-stone-300 font-medium">
+              <li className="border-b border-stone-800 pb-3">100% Vegan materials only</li>
+              <li className="border-b border-stone-800 pb-3">Eco-friendly supply chain</li>
+              <li className="border-b border-stone-800 pb-3">Premium quality assurance</li>
+              <li>Ethical production certification</li>
+            </ul>
           </div>
         </div>
 
-        {/* Requirements Section */}
-        <div className="bg-green-50 border border-green-200 rounded-xl p-5 sm:p-6 mb-6 sm:mb-8">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-6 h-6 text-green-700 flex-shrink-0 mt-1" />
-            <div>
-              <h3 className="font-semibold text-stone-800 mb-2">Product Requirements</h3>
-              <ul className="space-y-2 text-sm text-stone-700">
-                <li>• Products must be 100% vegan (no animal-derived materials)</li>
-                <li>• Sustainable and eco-friendly materials preferred</li>
-                <li>• High-quality craftsmanship and design</li>
-                <li>• Clear product images and descriptions</li>
-                <li>• Compliance with ethical production standards</li>
-              </ul>
-            </div>
+        {/* The Actual Form */}
+        <div id="apply" className="bg-white rounded-[3rem] shadow-2xl shadow-stone-200/50 p-8 md:p-16 border border-stone-100 overflow-hidden relative">
+
+          {/* Subtle Form Background Decal */}
+          <div className="absolute top-0 right-0 p-12 opacity-[0.03] select-none pointer-events-none">
+            <Upload className="w-64 h-64 rotate-12" />
           </div>
-        </div>
 
-        {/* Application Form */}
-        <div className="bg-white rounded-xl shadow-md p-6 sm:p-8">
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-stone-800 mb-5 sm:mb-6">Apply to Sell</h2>
-          
-          {!user && (
-            <div className="bg-stone-100 border border-stone-300 rounded-lg p-4 mb-6">
-              <p className="text-stone-700 text-sm">
-                Please{' '}
-                <Link to="/register" className="text-green-700 font-semibold hover:underline">
-                  create an account
-                </Link>
-                {' '}or{' '}
-                <Link to="/login" className="text-green-700 font-semibold hover:underline">
-                  sign in
-                </Link>
-                {' '}to submit your application.
-              </p>
+          <div className="relative z-10">
+            <div className="mb-12">
+              <h2 className="text-4xl font-serif font-bold text-stone-900">Application Entry</h2>
+              <p className="text-stone-400 font-bold uppercase text-[10px] tracking-widest mt-2">Start your journey here</p>
             </div>
-          )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="brandName" className="block text-sm font-medium text-stone-700 mb-2">
-                  Brand Name *
-                </label>
+            {!account && (
+              <div className="bg-orange-50/50 border border-orange-100 rounded-2xl p-6 mb-12 flex items-center gap-4">
+                <AlertCircle className="w-6 h-6 text-orange-500 flex-shrink-0" />
+                <p className="text-stone-700 text-sm font-medium">
+                  Authentication required: please{' '}
+                  <Link to="/register" className="text-stone-900 font-black underline decoration-green-500 underline-offset-4">register</Link>
+                  {' '}to start an application.
+                </p>
+              </div>
+            )}
+
+            <form onSubmit={handleApplicationSubmit} className="space-y-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-stone-400 ml-1">Brand Identity</label>
+                  <input
+                    type="text"
+                    value={submissionForm.brandName}
+                    onChange={(e) => setSubmissionForm({ ...submissionForm, brandName: e.target.value })}
+                    required
+                    className="w-full bg-stone-50/50 px-6 py-4 rounded-2xl border border-stone-100 focus:bg-white focus:border-stone-900 outline-none transition-all placeholder:text-stone-300"
+                    placeholder="e.g. EcoLux"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-stone-400 ml-1">Category Focus</label>
+                  <select
+                    value={submissionForm.productType}
+                    onChange={(e) => setSubmissionForm({ ...submissionForm, productType: e.target.value })}
+                    required
+                    className="w-full bg-stone-50/50 px-6 py-4 rounded-2xl border border-stone-100 focus:bg-white focus:border-stone-900 outline-none transition-all"
+                  >
+                    <option value="">Select Specialty</option>
+                    <option value="Tote">Tote Bags</option>
+                    <option value="Backpack">Backpacks</option>
+                    <option value="Clutches">Clutches</option>
+                    <option value="Other">Lifestyle / Misc</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-stone-400 ml-1">Core Materials</label>
                 <input
                   type="text"
-                  id="brandName"
-                  value={formData.brandName}
-                  onChange={(e) => setFormData({ ...formData, brandName: e.target.value })}
+                  value={submissionForm.material}
+                  onChange={(e) => setSubmissionForm({ ...submissionForm, material: e.target.value })}
                   required
-                  className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                  placeholder="Your Brand"
+                  className="w-full bg-stone-50/50 px-6 py-4 rounded-2xl border border-stone-100 focus:bg-white focus:border-stone-900 outline-none transition-all placeholder:text-stone-300"
+                  placeholder="Cork leather, organic cotton, ocean plastic..."
                 />
               </div>
-              <div>
-                <label htmlFor="productType" className="block text-sm font-medium text-stone-700 mb-2">
-                  Product Type *
-                </label>
-                <select
-                  id="productType"
-                  value={formData.productType}
-                  onChange={(e) => setFormData({ ...formData, productType: e.target.value })}
+
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-stone-400 ml-1">Your Story</label>
+                <textarea
+                  value={submissionForm.description}
+                  onChange={(e) => setSubmissionForm({ ...submissionForm, description: e.target.value })}
                   required
-                  className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                >
-                  <option value="">Select type</option>
-                  <option value="Tote">Tote Bags</option>
-                  <option value="Backpack">Backpacks</option>
-                  <option value="Clutches">Clutches</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="material" className="block text-sm font-medium text-stone-700 mb-2">
-                Materials Used *
-              </label>
-              <input
-                type="text"
-                id="material"
-                value={formData.material}
-                onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-                required
-                className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                placeholder="e.g., Cork Leather, Recycled PET, etc."
-              />
-            </div>
-
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-stone-700 mb-2">
-                Product Description *
-              </label>
-              <textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                required
-                rows={4}
-                className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
-                placeholder="Tell us about your products, your brand story, and why they're perfect for SCATCH..."
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-stone-700 mb-2">
-                  Business Email *
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                  className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                  placeholder="business@example.com"
+                  rows={4}
+                  className="w-full bg-stone-50/50 px-6 py-4 rounded-2xl border border-stone-100 focus:bg-white focus:border-stone-900 outline-none transition-all resize-none placeholder:text-stone-300"
+                  placeholder="Share your brand's mission with us..."
                 />
               </div>
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-stone-700 mb-2">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                  placeholder="+1 (555) 123-4567"
-                />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-stone-400 ml-1">Contact Email</label>
+                  <input
+                    type="email"
+                    value={submissionForm.email}
+                    onChange={(e) => setSubmissionForm({ ...submissionForm, email: e.target.value })}
+                    required
+                    className="w-full bg-stone-50/50 px-6 py-4 rounded-2xl border border-stone-100 focus:bg-white focus:border-stone-900 outline-none transition-all placeholder:text-stone-300"
+                    placeholder="partner@you.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-stone-400 ml-1">Digital Presence</label>
+                  <input
+                    type="url"
+                    value={submissionForm.website}
+                    onChange={(e) => setSubmissionForm({ ...submissionForm, website: e.target.value })}
+                    className="w-full bg-stone-50/50 px-6 py-4 rounded-2xl border border-stone-100 focus:bg-white focus:border-stone-900 outline-none transition-all placeholder:text-stone-300"
+                    placeholder="Website or Social link"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label htmlFor="website" className="block text-sm font-medium text-stone-700 mb-2">
-                Website / Social Media
-              </label>
-              <input
-                type="url"
-                id="website"
-                value={formData.website}
-                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                placeholder="https://yourwebsite.com or Instagram handle"
-              />
-            </div>
+              <button
+                type="submit"
+                disabled={isProcessing || !account}
+                className="w-full bg-stone-900 text-white py-6 rounded-2xl font-serif font-black text-lg hover:bg-green-700 transition-all disabled:opacity-30 disabled:grayscale flex items-center justify-center gap-4 relative overflow-hidden"
+              >
+                {isProcessing ? (
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-white rounded-full animate-bounce"></span>
+                    <span className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                    <span className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5" />
+                    Send Application
+                  </>
+                )}
+              </button>
+            </form>
 
-            <button
-              type="submit"
-              disabled={isSubmitting || !user}
-              className="w-full bg-green-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Submitting...</span>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-5 h-5" />
-                  <span>Submit Application</span>
-                </>
-              )}
-            </button>
-          </form>
-
-          <p className="text-sm text-stone-500 mt-6 text-center">
-            We review all applications within 3-5 business days. You'll receive an email notification 
-            once your application has been reviewed.
-          </p>
+            <span className="block text-center text-stone-300 text-[10px] font-bold uppercase tracking-[0.3em] mt-12">
+              Curated by SCATCH Partnerships
+            </span>
+          </div>
         </div>
       </div>
 
-      {showToast && (
+      {showConfirmationToast && (
         <Toast
-          message="Thank you! Your application has been submitted. We'll review it and get back to you soon."
+          message="Submission received! Our partners team will be in touch soon."
           type="success"
-          onClose={() => setShowToast(false)}
+          onClose={() => setShowConfirmationToast(false)}
         />
       )}
     </div>
   );
 }
+
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Filter, X } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { setSelectedCategory, setSelectedMaterial, clearFilters } from '../../store/productsSlice';
+import { setSelectedCategory, setSelectedMaterial, resetRegistryFilters } from '../../store/productsSlice';
 
 const categories = ['Tote', 'Backpack', 'Clutches'];
 const materials = [
@@ -28,7 +28,7 @@ function FilterContent() {
   };
 
   const handleClearFilters = () => {
-    dispatch(clearFilters());
+    dispatch(resetRegistryFilters());
   };
 
   return (
@@ -124,11 +124,10 @@ export default function ProductFilters() {
       <div className="lg:hidden fixed bottom-6 right-6 z-30">
         <button
           onClick={() => setIsMobileOpen(true)}
-          className={`flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${
-            hasActiveFilters
+          className={`flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${hasActiveFilters
               ? 'bg-green-700 text-white'
               : 'bg-stone-800 text-white hover:bg-stone-900'
-          }`}
+            }`}
           title="Open filters"
         >
           <Filter className="w-6 h-6" />

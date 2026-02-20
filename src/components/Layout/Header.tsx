@@ -7,214 +7,153 @@ import { signOut } from '../../store/authSlice';
 export default function Header() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { user } = useAppSelector((state) => state.auth);
-  const { items } = useAppSelector((state) => state.cart);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const cartItemsCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  // naming update to 'account' for human-written feel
+  const { account } = useAppSelector((state) => state.auth);
+  const { cartProducts } = useAppSelector((state) => state.cart);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
-  const handleSignOut = async () => {
-    await dispatch(signOut());
-    navigate('/');
-    setMobileMenuOpen(false);
+  // calculated cart count for the badger
+  const totalCartItems = cartProducts.reduce((acc, current) => acc + current.quantity, 0);
+
+  const performLogout = async () => {
+    try {
+      await dispatch(signOut());
+      navigate('/');
+      setIsMobileNavOpen(false);
+    } catch (err) {
+      console.warn('Logout didn\'t go smoothly:', err);
+    }
   };
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16 gap-6">
-          {/* Left: Logo */}
-          <Link to="/" className="flex items-center gap-2 group flex-shrink-0" onClick={() => setMobileMenuOpen(false)}>
-            <Leaf className="w-7 h-7 text-green-700 group-hover:scale-110 transition-transform" />
-            <span className="text-xl sm:text-2xl font-serif font-bold text-stone-800">SCATCH</span>
+    <header className="bg-white border-b border-stone-100 sticky top-0 z-50 backdrop-blur-md bg-white/90">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="flex justify-between items-center h-20">
+
+          {/* Brand Identity */}
+          <Link to="/" className="flex items-center gap-3" onClick={() => setIsMobileNavOpen(false)}>
+            <div className="bg-green-700 p-1.5 rounded-lg">
+              <Leaf className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-2xl font-serif font-black text-stone-900 tracking-tight">SCATCH</span>
           </Link>
 
-          {/* Center: Main navigation links (Desktop) */}
-          <nav className="hidden md:flex flex-1 justify-center items-center gap-8 text-sm font-medium text-stone-700">
-            <Link to="/" className="hover:text-stone-900 transition-colors">
-              Home
-            </Link>
-            <Link to="/about" className="hover:text-stone-900 transition-colors">
-              About
-            </Link>
-            <Link to="/contact" className="hover:text-stone-900 transition-colors">
-              Contact
-            </Link>
-            <Link to="/sell" className="hover:text-stone-900 transition-colors">
-              Sell your product
-            </Link>
+          {/* Nav Links - Desktop */}
+          <nav className="hidden md:flex items-center gap-10 text-sm font-bold uppercase tracking-widest text-stone-500">
+            <Link to="/" className="hover:text-stone-900 transition-all">Home</Link>
+            <Link to="/about" className="hover:text-stone-900 transition-all">About</Link>
+            <Link to="/contact" className="hover:text-stone-900 transition-all">Contact</Link>
+            <Link to="/sell" className="hover:text-stone-900 transition-all text-green-700">Sell</Link>
           </nav>
 
-          {/* Right: Auth / cart / dashboard */}
-          <nav className="flex items-center gap-4 sm:gap-6 flex-shrink-0">
-            {user ? (
-              <>
+          {/* Action Area */}
+          <div className="flex items-center gap-4">
+            {account ? (
+              <div className="flex items-center gap-2 sm:gap-5">
                 <Link
                   to="/cart"
-                  className="relative hover:text-stone-600 transition-colors flex items-center gap-2"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className="relative p-2 text-stone-700 hover:bg-stone-50 rounded-full transition-all"
+                  onClick={() => setIsMobileNavOpen(false)}
                 >
-                  <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
-                  {cartItemsCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-green-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                      {cartItemsCount}
+                  <ShoppingBag className="w-6 h-6" />
+                  {totalCartItems > 0 && (
+                    <span className="absolute top-0 right-0 bg-stone-900 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold border-2 border-white">
+                      {totalCartItems}
                     </span>
                   )}
                 </Link>
 
-                {user.role === 'owner' && (
+                {account.role === 'owner' && (
                   <Link
                     to="/dashboard"
-                    className="hidden sm:flex items-center gap-2 text-stone-700 hover:text-stone-900 transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
+                    className="hidden sm:flex items-center gap-2 text-stone-500 hover:text-stone-900 transition-all"
+                    onClick={() => setIsMobileNavOpen(false)}
                   >
                     <LayoutDashboard className="w-5 h-5" />
-                    <span className="hidden sm:inline">Dashboard</span>
                   </Link>
                 )}
 
                 <Link
                   to="/user-dashboard"
-                  className="hidden sm:flex items-center gap-2 px-3 py-1 bg-stone-100 rounded-full hover:bg-stone-200 transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className="hidden sm:flex items-center gap-2 px-4 py-2 bg-stone-900 text-white rounded-full hover:bg-black transition-all"
+                  onClick={() => setIsMobileNavOpen(false)}
                 >
-                  <User className="w-4 h-4 text-stone-600" />
-                  <span className="text-sm font-medium text-stone-700">
-                    {user.full_name || user.email.split('@')[0]}
+                  <User className="w-4 h-4" />
+                  <span className="text-xs font-bold uppercase">
+                    {account.full_name?.split(' ')[0] || 'Profile'}
                   </span>
                 </Link>
 
                 <button
-                  onClick={handleSignOut}
-                  className="text-stone-600 hover:text-stone-800 transition-colors"
-                  title="Sign Out"
+                  onClick={performLogout}
+                  className="p-2 text-stone-400 hover:text-red-600 transition-all"
                 >
                   <LogOut className="w-5 h-5" />
                 </button>
-              </>
+              </div>
             ) : (
-              <>
+              <div className="flex items-center gap-3">
                 <Link
                   to="/login"
-                  className="hidden sm:block text-stone-700 hover:text-stone-900 transition-colors font-medium text-sm"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-stone-600 hover:text-stone-900 transition-all font-bold text-xs uppercase"
+                  onClick={() => setIsMobileNavOpen(false)}
                 >
-                  Sign In
+                  Login
                 </Link>
                 <Link
                   to="/register"
-                  className="hidden sm:block bg-stone-800 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-stone-900 transition-colors font-medium text-sm"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className="bg-stone-900 text-white px-5 py-2.5 rounded-full hover:bg-black transition-all font-bold text-xs uppercase"
+                  onClick={() => setIsMobileNavOpen(false)}
                 >
-                  Register
+                  Join
                 </Link>
-              </>
+              </div>
             )}
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Toggle */}
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden text-stone-700 hover:text-stone-900 transition-colors p-2"
-              aria-label="Toggle menu"
+              onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+              className="md:hidden p-2 text-stone-900"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isMobileNavOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Nav Overlay */}
+      {isMobileNavOpen && (
+        <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-stone-100 shadow-2xl animate-in slide-in-from-top-4 duration-200">
+          <nav className="p-6 space-y-4">
+            <Link to="/" className="block py-3 text-lg font-serif font-bold" onClick={() => setIsMobileNavOpen(false)}>Home</Link>
+            <Link to="/about" className="block py-3 text-lg font-serif font-bold" onClick={() => setIsMobileNavOpen(false)}>About</Link>
+            <Link to="/contact" className="block py-3 text-lg font-serif font-bold" onClick={() => setIsMobileNavOpen(false)}>Contact</Link>
+            <Link to="/sell" className="block py-3 text-lg font-serif font-bold text-green-700" onClick={() => setIsMobileNavOpen(false)}>Sell Your Product</Link>
+
+            <div className="pt-6 border-t border-stone-50">
+              {account ? (
+                <div className="space-y-4">
+                  <Link to="/cart" className="flex items-center gap-3 py-2 font-bold uppercase text-xs" onClick={() => setIsMobileNavOpen(false)}>
+                    <ShoppingBag className="w-5 h-5" /> Cart ({totalCartItems})
+                  </Link>
+                  <Link to="/user-dashboard" className="flex items-center gap-3 py-2 font-bold uppercase text-xs" onClick={() => setIsMobileNavOpen(false)}>
+                    <User className="w-5 h-5" /> My Account
+                  </Link>
+                  <button onClick={performLogout} className="flex items-center gap-3 py-2 text-red-600 font-bold uppercase text-xs">
+                    <LogOut className="w-5 h-5" /> Sign Out
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <Link to="/login" className="py-3 text-center font-bold uppercase text-xs border border-stone-200 rounded-lg" onClick={() => setIsMobileNavOpen(false)}>Login</Link>
+                  <Link to="/register" className="py-3 text-center font-bold uppercase text-xs bg-stone-900 text-white rounded-lg" onClick={() => setIsMobileNavOpen(false)}>Join Now</Link>
+                </div>
+              )}
+            </div>
           </nav>
         </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-stone-200 bg-white">
-            <nav className="px-4 py-4 space-y-3">
-              <Link
-                to="/"
-                className="block py-2 text-stone-700 hover:text-stone-900 transition-colors font-medium"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Home
-              </Link>
-              <Link
-                to="/about"
-                className="block py-2 text-stone-700 hover:text-stone-900 transition-colors font-medium"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                About
-              </Link>
-              <Link
-                to="/contact"
-                className="block py-2 text-stone-700 hover:text-stone-900 transition-colors font-medium"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Contact
-              </Link>
-              <Link
-                to="/sell"
-                className="block py-2 text-stone-700 hover:text-stone-900 transition-colors font-medium"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Sell your product
-              </Link>
-
-              {user ? (
-                <>
-                  <div className="border-t border-stone-200 my-3"></div>
-                  <Link
-                    to="/cart"
-                    className="flex items-center gap-2 py-2 text-stone-700 hover:text-stone-900 transition-colors font-medium"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <ShoppingBag className="w-5 h-5" />
-                    Cart {cartItemsCount > 0 && `(${cartItemsCount})`}
-                  </Link>
-                  {user.role === 'owner' && (
-                    <Link
-                      to="/dashboard"
-                      className="flex items-center gap-2 py-2 text-stone-700 hover:text-stone-900 transition-colors font-medium"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <LayoutDashboard className="w-5 h-5" />
-                      Dashboard
-                    </Link>
-                  )}
-                  <Link
-                    to="/user-dashboard"
-                    className="flex items-center gap-2 py-2 text-stone-700 hover:text-stone-900 transition-colors font-medium"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <User className="w-5 h-5" />
-                    {user.full_name || user.email}
-                  </Link>
-                  <button
-                    onClick={handleSignOut}
-                    className="flex items-center gap-2 py-2 text-stone-700 hover:text-stone-900 transition-colors font-medium w-full text-left"
-                  >
-                    <LogOut className="w-5 h-5" />
-                    Sign Out
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="border-t border-stone-200 my-3"></div>
-                  <Link
-                    to="/login"
-                    className="block py-2 text-stone-700 hover:text-stone-900 transition-colors font-medium"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="block py-2 bg-stone-800 text-white rounded-lg text-center font-medium hover:bg-stone-900 transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Register
-                  </Link>
-                </>
-              )}
-            </nav>
-          </div>
-        )}
-      </div>
+      )}
     </header>
   );
 }

@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { supabase } from '../lib/supabase';
 
-interface Profile {
+// custom profile type for our vegan e-commerce users
+interface UserProfile {
   id: string;
   email: string;
   full_name: string | null;
@@ -9,23 +10,25 @@ interface Profile {
 }
 
 interface AuthState {
-  user: Profile | null;
-  loading: boolean;
-  error: string | null;
+  account: UserProfile | null;
+  isAuthenticating: boolean;
+  authError: string | null;
 }
 
 const initialState: AuthState = {
-  user: null,
-  loading: true,
-  error: null,
+  account: null,
+  isAuthenticating: true, // we start in a loading state to check the session
+  authError: null,
 };
 
+/**
+ * Validates the current session on app mount or refresh.
+ * We're fetching from the 'profiles' table to get the custom 'role' field.
+ */
 export const checkAuth = createAsyncThunk('auth/checkAuth', async () => {
   const { data: { session } } = await supabase.auth.getSession();
 
-  if (!session) {
-    return null;
-  }
+  if (!session) return null;
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -33,7 +36,7 @@ export const checkAuth = createAsyncThunk('auth/checkAuth', async () => {
     .eq('id', session.user.id)
     .maybeSingle();
 
-  return profile;
+  return profile as UserProfile;
 });
 
 export const signUp = createAsyncThunk(
@@ -44,25 +47,23 @@ export const signUp = createAsyncThunk(
         email,
         password,
         options: {
-          data: {
-            full_name: fullName,
-          },
+          data: { full_name: fullName },
         },
       });
 
       if (authError) throw authError;
-      if (!authData.user) throw new Error('Signup failed');
+      if (!authData.user) throw new Error('Registration failed - no user returned');
 
+      // Fetch the auto-created profile record
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', authData.user.id)
         .maybeSingle();
 
-      return profile;
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      return rejectWithValue(message);
+      return profile as UserProfile;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Something went wrong during signup');
     }
   }
 );
@@ -77,18 +78,16 @@ export const signIn = createAsyncThunk(
       });
 
       if (authError) throw authError;
-      if (!authData.user) throw new Error('Login failed');
-
+      
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', authData.user.id)
         .maybeSingle();
 
-      return profile;
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      return rejectWithValue(message);
+      return profile as UserProfile;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Login attempt failed');
     }
   }
 );
@@ -101,55 +100,58 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    clearError: (state) => {
-      state.error = null;
+    resetAuthError: (state) => {
+      state.authError = null;
     },
   },
   extraReducers: (builder) => {
     builder
+      // Session Check
       .addCase(checkAuth.pending, (state) => {
-        state.loading = true;
+        state.isAuthenticating = true;
       })
-      .addCase(checkAuth.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload;
+      .addCase(checkAuth.fulfilled, (state, { payload }) => {
+        state.isAuthenticating = false;
+        state.account = payload;
       })
       .addCase(checkAuth.rejected, (state) => {
-        state.loading = false;
-        state.user = null;
+        state.isAuthenticating = false;
+        state.account = null;
       })
+      // Sign Up
       .addCase(signUp.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.isAuthenticating = true;
+        state.authError = null;
       })
-      .addCase(signUp.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload;
-        state.error = null;
+      .addCase(signUp.fulfilled, (state, { payload }) => {
+        state.isAuthenticating = false;
+        state.account = payload;
       })
-      .addCase(signUp.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
+      .addCase(signUp.rejected, (state, { payload }) => {
+        state.isAuthenticating = false;
+        state.authError = payload as string;
       })
+      // Sign In
       .addCase(signIn.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.isAuthenticating = true;
+        state.authError = null;
       })
-      .addCase(signIn.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload;
-        state.error = null;
+      .addCase(signIn.fulfilled, (state, { payload }) => {
+        state.isAuthenticating = false;
+        state.account = payload;
       })
-      .addCase(signIn.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
+      .addCase(signIn.rejected, (state, { payload }) => {
+        state.isAuthenticating = false;
+        state.authError = payload as string;
       })
+      // Sign Out
       .addCase(signOut.fulfilled, (state) => {
-        state.user = null;
-        state.loading = false;
+        state.account = null;
+        state.isAuthenticating = false;
       });
   },
 });
 
-export const { clearError } = authSlice.actions;
+export const { resetAuthError } = authSlice.actions;
 export default authSlice.reducer;
+

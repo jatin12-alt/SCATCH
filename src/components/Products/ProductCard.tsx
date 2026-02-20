@@ -1,4 +1,4 @@
-import { ShoppingCart, Leaf } from 'lucide-react';
+import { Leaf, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { addToCart } from '../../store/cartSlice';
@@ -24,7 +24,10 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { user } = useAppSelector((state) => state.auth);
+
+  // naming update: user -> account
+  const { account } = useAppSelector((state) => state.auth);
+
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -32,7 +35,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    if (!user) {
+    if (!account) {
       setShowLoginModal(true);
       return;
     }
@@ -43,13 +46,13 @@ export default function ProductCard({ product }: ProductCardProps) {
       return;
     }
 
-    await dispatch(addToCart({ userId: user.id, productId: product.id }));
+    await dispatch(addToCart({ userId: account.id, productId: product.id }));
     setToastMessage('Added to cart');
     setShowToast(true);
   };
 
   const handleProductClick = () => {
-    if (!user) {
+    if (!account) {
       setShowLoginModal(true);
       return;
     }
@@ -58,65 +61,68 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <>
-      <button
+      <div
         onClick={handleProductClick}
-        className="group bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-left w-full"
+        className="group relative bg-white rounded-[2rem] overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-stone-200/50 cursor-pointer border border-stone-100"
       >
-        <div className="relative overflow-hidden h-64">
+        {/* Visual Composition */}
+        <div className="relative overflow-hidden aspect-[4/5]">
           <img
             src={product.image_url || 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&q=80'}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[0.2] group-hover:grayscale-0"
           />
-          <div className="absolute top-3 right-3 bg-green-700 text-white px-3 py-1 rounded-full flex items-center gap-1 text-xs font-medium shadow-lg">
-            <Leaf className="w-3 h-3" />
-            100% Vegan
+
+          {/* Status Indicators */}
+          <div className="absolute top-4 left-4 flex flex-col gap-2">
+            <div className="bg-white/90 backdrop-blur-md text-stone-900 px-3 py-1.5 rounded-full flex items-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-sm">
+              <Leaf className="w-3 h-3 text-green-600" />
+              Mindful
+            </div>
           </div>
+
           {product.stock_count === 0 && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-              <span className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm">
-                Out of Stock
+            <div className="absolute inset-0 bg-stone-950/40 backdrop-blur-[2px] flex items-center justify-center">
+              <span className="bg-white text-stone-950 px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl">
+                Depleted
               </span>
             </div>
           )}
-        </div>
 
-        <div className="p-5 space-y-3">
-          <div>
-            <h3 className="font-serif text-xl font-bold text-stone-800 mb-1">{product.name}</h3>
-            <p className="text-sm text-stone-600 line-clamp-2">{product.description}</p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs bg-stone-100 text-stone-700 px-2 py-1 rounded-md font-medium">
-              {product.category}
-            </span>
-            <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-md font-medium">
-              {product.material_type}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-2xl font-bold text-stone-800">${product.price}</span>
+          {/* Quick Action Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-stone-950/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
             <button
               onClick={handleAddToCart}
               disabled={product.stock_count === 0}
-              className="bg-stone-800 text-white px-4 py-2 rounded-lg hover:bg-stone-900 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-white text-stone-900 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 disabled:opacity-50 shadow-xl"
             >
-              <ShoppingCart className="w-4 h-4" />
-              <span className="text-sm font-medium">Add to Cart</span>
+              <Plus className="w-3 h-3" />
+              Procure Item
             </button>
           </div>
-
-          <p className="text-xs text-stone-500">{product.stock_count} in stock</p>
         </div>
-      </button>
+
+        {/* Descriptor Area */}
+        <div className="p-6">
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mb-1">{product.material_type}</p>
+              <h3 className="font-serif text-lg font-bold text-stone-900 group-hover:text-green-800 transition-colors leading-tight">
+                {product.name}
+              </h3>
+            </div>
+            <span className="text-xl font-black text-stone-900 font-serif tracking-tighter">
+              ${product.price}
+            </span>
+          </div>
+        </div>
+      </div>
 
       {showToast && <Toast message={toastMessage} type="success" onClose={() => setShowToast(false)} />}
       <LoginPromptModal
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
-        message="Please login first to view product details and add items to cart"
+        message="Authenticating provides access to the full boutique experience."
       />
     </>
   );

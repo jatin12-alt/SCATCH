@@ -16,22 +16,25 @@ interface Product {
 }
 
 interface ProductsState {
-  items: Product[];
-  loading: boolean;
-  error: string | null;
+  productList: Product[];
+  isProductsFetching: boolean;
+  productsError: string | null;
   selectedCategory: string | null;
   selectedMaterial: string | null;
 }
 
 const initialState: ProductsState = {
-  items: [],
-  loading: false,
-  error: null,
+  productList: [],
+  isProductsFetching: false,
+  productsError: null,
   selectedCategory: null,
   selectedMaterial: null,
 };
 
-export const fetchProducts = createAsyncThunk('products/fetchProducts', async () => {
+/**
+ * Retrieve the latest collections from our archive
+ */
+export const fetchProducts = createAsyncThunk('products/retrieveFromArchive', async () => {
   const { data, error } = await supabase
     .from('products')
     .select('*')
@@ -41,8 +44,11 @@ export const fetchProducts = createAsyncThunk('products/fetchProducts', async ()
   return data as Product[];
 });
 
+/**
+ * Manually register a new handcrafted piece to the registry
+ */
 export const addProduct = createAsyncThunk(
-  'products/addProduct',
+  'products/registerNewPiece',
   async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>, { rejectWithValue }) => {
     try {
       const { data, error } = await supabase
@@ -54,14 +60,17 @@ export const addProduct = createAsyncThunk(
       if (error) throw error;
       return data as Product;
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      const message = error instanceof Error ? error.message : 'Registry entry failed.';
       return rejectWithValue(message);
     }
   }
 );
 
+/**
+ * Update the details of an existing archive entry
+ */
 export const updateProduct = createAsyncThunk(
-  'products/updateProduct',
+  'products/modifyRegistryEntry',
   async ({ id, updates }: { id: string; updates: Partial<Product> }, { rejectWithValue }) => {
     try {
       const { data, error } = await supabase
@@ -74,14 +83,17 @@ export const updateProduct = createAsyncThunk(
       if (error) throw error;
       return data as Product;
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      const message = error instanceof Error ? error.message : 'Modification process failed.';
       return rejectWithValue(message);
     }
   }
 );
 
+/**
+ * Remove a piece from the public registry
+ */
 export const deleteProduct = createAsyncThunk(
-  'products/deleteProduct',
+  'products/removeFromRegistry',
   async (id: string, { rejectWithValue }) => {
     try {
       const { error } = await supabase
@@ -92,7 +104,7 @@ export const deleteProduct = createAsyncThunk(
       if (error) throw error;
       return id;
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      const message = error instanceof Error ? error.message : 'Removal process failed.';
       return rejectWithValue(message);
     }
   }
@@ -108,7 +120,7 @@ const productsSlice = createSlice({
     setSelectedMaterial: (state, action: PayloadAction<string | null>) => {
       state.selectedMaterial = action.payload;
     },
-    clearFilters: (state) => {
+    resetRegistryFilters: (state) => {
       state.selectedCategory = null;
       state.selectedMaterial = null;
     },
@@ -116,30 +128,33 @@ const productsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchProducts.pending, (state) => {
-        state.loading = true;
+        state.isProductsFetching = true;
       })
-      .addCase(fetchProducts.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload;
+      .addCase(fetchProducts.fulfilled, (state, { payload }) => {
+        state.isProductsFetching = false;
+        state.productList = payload;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to fetch products';
+        state.isProductsFetching = false;
+        state.productsError = action.error.message || 'We couldn\'t load our collection at this moment.';
       })
-      .addCase(addProduct.fulfilled, (state, action) => {
-        state.items.unshift(action.payload);
+
+      .addCase(addProduct.fulfilled, (state, { payload }) => {
+        state.productList.unshift(payload);
       })
-      .addCase(updateProduct.fulfilled, (state, action) => {
-        const index = state.items.findIndex((item) => item.id === action.payload.id);
+
+      .addCase(updateProduct.fulfilled, (state, { payload }) => {
+        const index = state.productList.findIndex((item) => item.id === payload.id);
         if (index !== -1) {
-          state.items[index] = action.payload;
+          state.productList[index] = payload;
         }
       })
-      .addCase(deleteProduct.fulfilled, (state, action) => {
-        state.items = state.items.filter((item) => item.id !== action.payload);
+
+      .addCase(deleteProduct.fulfilled, (state, { payload }) => {
+        state.productList = state.productList.filter((item) => item.id !== payload);
       });
   },
 });
 
-export const { setSelectedCategory, setSelectedMaterial, clearFilters } = productsSlice.actions;
+export const { setSelectedCategory, setSelectedMaterial, resetRegistryFilters } = productsSlice.actions;
 export default productsSlice.reducer;
