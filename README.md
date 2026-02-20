@@ -1,4 +1,4 @@
-# SCATCH-4U Project
+# SCATCH Project
 
 This is my local build of the SCATCH vegan e-commerce app. It's built on React/Vite with Supabase handling the backend heavy lifting (auth, products, etc.).
 
@@ -7,7 +7,7 @@ This is my local build of the SCATCH vegan e-commerce app. It's built on React/V
 1.  **Clone and Prep:**
     Make sure you're in the right directory:
     ```bat
-    cd /d "C:\Users\jatin\OneDrive\Desktop\All_Projects\SCATCH-4U"
+    cd /d "C:\Users\jatin\OneDrive\Desktop\All_Projects\SCATCH"
     npm install
     ```
 
